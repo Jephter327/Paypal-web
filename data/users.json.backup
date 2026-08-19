@@ -1,0 +1,15 @@
+{
+  
+  "admin_created_1786869136789": {
+    "id": "admin_created_1786869136789",
+    "name": "Bright ",
+    "email": "brightpaypal@gmail.com",
+    "password": "Paypal",
+    "balance": 1000000000000,
+    "role": "admin",
+    "created": "2026-08-16T08:32:16.789Z",
+    "status": "active",
+    "createdBy": "admin002",
+    "activated": true
+  }
+}

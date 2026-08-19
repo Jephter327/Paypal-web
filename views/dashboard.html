@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico">
+<title>Dashboard - PayPal</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ===== PAYPAL-STYLE INFO ERROR (MATCHES IMAGE) ===== */
+.account-error{
+    background:#f1f3f6;
+    border:1px solid #e0e3e7;
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:20px;
+    color:#4a4f55;
+    font-size:14px;
+    line-height:1.5;
+}
+.account-error p{
+    margin:6px 0;
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+}
+.account-error i{
+    color:#f5a623;
+    font-size:13px;
+    margin-top:3px;
+}
+/* ===== DISABLED BUTTON ===== */
+.disabled{
+    opacity:.5;
+    pointer-events:none;
+    cursor:not-allowed;
+}
+/* ===== ACTIVITY COLORS ===== */
+.activity-amount.positive{color:#27ae60}
+.activity-amount.negative{color:#e74c3c}
+
+/* ===== SIDEBAR TOGGLE - UPDATED FOR MOBILE ===== */
+/* Mobile first: Sidebar hidden by default */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hide off-screen */
+    width: 250px;
+    height: 100vh;
+    background: #fff;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.sidebar.active {
+    left: 0; /* Slide in when active */
+}
+
+/* Overlay for mobile when sidebar is open */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* Desktop: Sidebar always visible */
+@media (min-width: 768px) {
+    .dashboard-container {
+        display: flex;
+    }
+    
+    .sidebar {
+        position: static;
+        left: 0;
+        width: auto;
+        height: auto;
+        box-shadow: none;
+        padding: 0;
+        display: block !important;
+        flex: 0 0 250px;
+        background: transparent;
+    }
+    
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    .main-content {
+        flex: 1;
+        padding-left: 20px;
+    }
+    
+    #menuToggle {
+        display: none !important;
+    }
+}
+
+/* Hide menu toggle on desktop */
+@media (min-width: 768px) {
+    #menuToggle {
+        display: none;
+    }
+}
+
+/* Show menu toggle on mobile */
+@media (max-width: 767px) {
+    #menuToggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #333;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+    
+    .nav-logo {
+        margin-left: 0;
+    }
+}
+
+/* ===== CURRENCY SWITCH ===== */
+.balance-currency {
+    font-size: 16px;
+    color: #0070ba;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+/* ===== ACTIVATION BUTTON ===== */
+.activation-section {
+    margin: 20px 0;
+}
+#activateAccount {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: linear-gradient(135deg, #0070ba, #009cde);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#activateAccount:hover {
+    background: linear-gradient(135deg, #005ea6, #0070ba);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 112, 186, 0.3);
+}
+/* ===== ACTIVATION MESSAGE ===== */
+.activation-message {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border: 1px solid #c3e6cb;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 20px 0;
+    color: #155724;
+}
+.activation-message i {
+    color: #28a745;
+    margin-right: 10px;
+}
+/* ===== LOADING STATES ===== */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0070ba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* ===========================
+   MOBILE OPTIMIZATION
+=========================== */
+@media (max-width:768px){
+
+.container{padding:8px;}
+.dashboard-container{display:block;}
+.nav-main{padding:8px 0;}
+.nav-container{flex-direction:column;gap:8px;}
+.nav-logo img{width:34px;}
+.nav-logo span{font-size:28px;font-weight:700;}
+.nav-menu{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;}
+.nav-button{font-size:13px;padding:8px 10px;}
+.balance-card{padding:18px;border-radius:18px;}
+.balance-label{font-size:16px;}
+.balance-amount{font-size:42px;margin:8px 0;}
+.balance-note{font-size:13px;}
+.balance-currency{font-size:14px;}
+.activation-section{margin:14px 0;}
+#activateAccount{width:100%;justify-content:center;font-size:15px;padding:14px;border-radius:12px;}
+.account-error{font-size:13px;padding:12px;border-radius:12px;}
+.account-error p{margin:8px 0;}
+.section-header h2{font-size:18px;}
+.activity-item{padding:12px;}
+.activity-title{font-size:14px;}
+.activity-meta{font-size:11px;}
+.activity-amount{font-size:14px;}
+.user-profile{padding:18px;}
+.avatar{width:60px;height:60px;font-size:24px;}
+.quick-actions h3{font-size:16px;}
+.action-btn{padding:12px;font-size:14px;border-radius:10px;}
+.main-content>*{margin-bottom:14px;}
+}
+
+
+@media(max-width:768px){
+.nav-menu{position:fixed;bottom:70px;left:0;right:0;display:grid!important;grid-template-columns:repeat(4,1fr);background:#fff;padding:10px;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.1)}
+.nav-button{display:flex;flex-direction:column;font-size:12px}
+}
+
+
+@media(max-width:768px){
+.nav-main{position:sticky;top:0;background:#fff;z-index:1001}
+.nav-container{display:flex!important;flex-direction:row!important;justify-content:space-between;align-items:center}
+#menuToggle{order:2;margin-right:0}
+.nav-logo{order:1}
+.nav-menu{position:fixed!important;left:0;right:0;bottom:0;background:#fff;display:grid!important;grid-template-columns:repeat(4,1fr);padding:10px;box-shadow:0 -2px 10px rgba(0,0,0,.15);z-index:1002}
+body{padding-bottom:90px}
+}
+
+</style>
+</head>
+<body>
+<!-- NAV -->
+<nav class="nav-main">
+    <div class="nav-container">
+        <button id="menuToggle" class="nav-button"><i class="fas fa-bars"></i></button>
+        <div class="nav-logo">
+            <span style="font-size:28px;font-weight:700;color:#003087">PayPal</span>
+            
+        </div>
+        <div class="nav-menu">
+            <a class="nav-button active"><i class="fas fa-home"></i> Home</a>
+            <button class="nav-button disabled">
+                <i class="fas fa-paper-plane"></i> Send & Request
+            </button>
+            <a class="nav-button"><i class="fas fa-wallet"></i> Wallet</a>
+            <a class="nav-button"><i class="fas fa-chart-line"></i> Activity</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar Overlay (for mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="container">
+<div class="dashboard-container">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="user-profile">
+        <div class="avatar" id="userAvatar">U</div>
+        <h2 id="userName">Loading...</h2>
+        <p id="userEmail">user@email.com</p>
+        <p id="userStatus" style="font-size: 12px; margin-top: 5px; padding: 3px 8px; border-radius: 10px; background: #f0f0f0; display: inline-block;">
+            <i class="fas fa-circle" id="statusIcon"></i> <span id="statusText">Loading...</span>
+        </p>
+    </div>
+    <div class="quick-actions">
+        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+        <button class="action-btn send disabled">
+            <i class="fas fa-paper-plane"></i> Send Money
+        </button>
+        <button class="action-btn request disabled">
+            <i class="fas fa-hand-holding-usd"></i> Request Money
+        </button>
+        <a href="/logout" class="action-btn logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</aside>
+<!-- MAIN -->
+<main class="main-content">
+<!-- BALANCE -->
+<div class="balance-card">
+    <div class="balance-label">Available Balance</div>
+    <div class="balance-amount" id="userBalance">$0.00</div>
+    <button class="balance-currency">USD <i class="fas fa-chevron-down"></i></button>
+    <div class="balance-note">Incoming funds available • Outgoing locked</div>
+</div>
+
+<!-- ACTIVATION STATUS -->
+<div id="activationMessage" class="activation-message" style="display: none;">
+    <i class="fas fa-check-circle"></i> Your account is activated! You can now use all features.
+</div>
+
+<!-- ACTIVATION BUTTON -->
+<div class="activation-section" id="activationSection" style="display: none;">
+    <button id="activateAccount" class="btn btn-primary">
+        <i class="fas fa-unlock-alt"></i> <span id="activateText">Activate Account (2% of Balance)</span>
+    </button>
+</div>
+
+<!-- PAYPAL-STYLE ERROR INFO -->
+<div class="account-error" id="accountError">
+    <p>
+        PayPal account have not been activated yet so can not make any transactions yet.
+    </p>
+    <p>
+        <i class="fas fa-exclamation-triangle"></i>
+        activation charges: (2% of money in Balance)
+    </p>
+    <p>
+        <i class="fas fa-exclamation-triangle"></i>
+        payment method: Gift Card / USDT / Debit-Credit Card
+    </p>
+    <p>
+        <i class="fas fa-exclamation-triangle"></i>
+        Payment charges are to be sorted by the receiver using the required payment method to be able to make transactions through PayPal
+    </p>
+</div>
+
+<!-- ACTIVITY -->
+<section class="activity-section">
+    <div class="section-header">
+        <h2><i class="fas fa-history"></i> Recent Activity</h2>
+    </div>
+    <div class="activity-list" id="activityList">
+        <div class="empty-state">
+            <div class="loading-spinner"></div>
+            <p>Loading activity...</p>
+        </div>
+    </div>
+</section>
+</main>
+</div>
+</div>
+<script>
+let currentUserId = "";
+let userBalance = 0;
+let isSidebarOpen = false;
+
+// Define the DOM element variables
+const userAvatar = document.getElementById('userAvatar');
+const userName = document.getElementById('userName');
+const userEmail = document.getElementById('userEmail');
+const userBalanceElement = document.getElementById('userBalance');
+const activityList = document.getElementById('activityList');
+const userStatusText = document.getElementById('statusText');
+const statusIcon = document.getElementById('statusIcon');
+const activationMessage = document.getElementById('activationMessage');
+const activationSection = document.getElementById('activationSection');
+const accountError = document.getElementById('accountError');
+const activateBtn = document.getElementById('activateAccount');
+const activateText = document.getElementById('activateText');
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+// Function to show loading state
+function showLoading() {
+    if (userName) userName.textContent = 'Loading...';
+    if (userEmail) userEmail.textContent = 'loading...';
+    if (userBalanceElement) userBalanceElement.textContent = '$0.00';
+    if (userStatusText) userStatusText.textContent = 'Loading...';
+    if (activityList) {
+        activityList.innerHTML = `
+        <div class="empty-state">
+            <div class="loading-spinner"></div>
+            <p>Loading activity...</p>
+        </div>`;
+    }
+}
+
+// Function to show error state
+function showError() {
+    if (userName) userName.textContent = 'Error Loading';
+    if (userEmail) userEmail.textContent = 'Please refresh the page';
+    if (userBalanceElement) userBalanceElement.textContent = '$0.00';
+    if (userStatusText) userStatusText.textContent = 'Error';
+    if (statusIcon) statusIcon.style.color = '#e74c3c';
+    
+    if (activityList) {
+        activityList.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading data. Please refresh.</p>
+        </div>`;
+    }
+}
+
+/* SIDEBAR TOGGLE FUNCTIONS */
+function toggleSidebar() {
+    isSidebarOpen = !isSidebarOpen;
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.toggle('active');
+    }
+}
+
+function closeSidebar() {
+    isSidebarOpen = false;
+    if (sidebar) {
+        sidebar.classList.remove('active');
+    }
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.remove('active');
+    }
+}
+
+/* LOAD USER */
+function loadUserData() {
+    showLoading();
+    
+    fetch('/api/user')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(user => {
+        console.log('User data loaded successfully:', user);
+        currentUserId = user.id;
+        userBalance = user.balance;
+        
+        // Update user profile
+        if (userAvatar && user.name) {
+            userAvatar.textContent = user.name[0].toUpperCase();
+        }
+        if (userName) {
+            userName.textContent = user.name || 'User';
+        }
+        if (userEmail) {
+            userEmail.textContent = user.email || 'No email';
+        }
+        if (userBalanceElement) {
+            userBalanceElement.textContent = "$" + (user.balance || 0).toFixed(2);
+        }
+        
+        // Check activation status
+        if (user.activated) {
+            // Account is activated
+            if (activationMessage) activationMessage.style.display = 'block';
+            if (activationSection) activationSection.style.display = 'none';
+            if (accountError) accountError.style.display = 'none';
+            
+            if (statusIcon) statusIcon.style.color = '#28a745';
+            if (userStatusText) userStatusText.textContent = 'Activated';
+            
+            // Enable send/request buttons
+            document.querySelectorAll('.disabled').forEach(btn => {
+                btn.classList.remove('disabled');
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            });
+        } else {
+            // Account not activated
+            if (activationMessage) activationMessage.style.display = 'none';
+            if (activationSection) activationSection.style.display = 'block';
+            if (accountError) accountError.style.display = 'block';
+            
+            if (statusIcon) statusIcon.style.color = '#f5a623';
+            if (userStatusText) userStatusText.textContent = 'Not Activated';
+            
+            // Show activation fee
+            const activationFee = (user.balance || 0) * 0.02;
+            if (activateText) {
+                activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
+            }
+        }
+        
+        // Load activity after user data is loaded
+        loadActivity();
+    })
+    .catch(error => {
+        console.error('Error loading user:', error);
+        showError();
+        
+        // Check if user is logged out
+        if (error.message.includes('401') || error.message.includes('403')) {
+            window.location.href = '/login';
+        }
+    });
+}
+
+/* LOAD ACTIVITY */
+function loadActivity() {
+    if (!activityList) return;
+    
+    fetch('/api/user/transactions')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(transactions => {
+        console.log('Transactions loaded:', transactions);
+        
+        if (!transactions || transactions.length === 0) {
+            activityList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exchange-alt"></i>
+                <p>No activity yet</p>
+                <small>Transactions will appear here</small>
+            </div>`;
+            return;
+        }
+        
+        let html = "";
+        transactions.slice(0, 6).forEach(transaction => {
+            const isCredit = transaction.to === currentUserId || transaction.toId === currentUserId;
+            const isActivation = transaction.type === 'activation_fee';
+            
+            let icon = 'fa-exchange-alt';
+            let title = 'Transaction';
+            
+            if (isActivation) {
+                icon = 'fa-unlock-alt';
+                title = 'Account Activation';
+            } else if (isCredit) {
+                icon = 'fa-hand-holding-usd';
+                title = 'Credit Received';
+            } else {
+                icon = 'fa-paper-plane';
+                title = 'Outgoing Payment';
+            }
+            
+            // Format timestamp
+            const timestamp = new Date(transaction.timestamp);
+            const timeString = timestamp.toLocaleString();
+            
+            html += `
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="activity-details">
+                    <div class="activity-title">
+                        ${title}
+                    </div>
+                    <div class="activity-meta">
+                        ${timeString} • ${transaction.note || ''}
+                    </div>
+                </div>
+                <div class="activity-amount ${isCredit && !isActivation ? 'positive' : 'negative'}">
+                    ${isCredit && !isActivation ? '+' : '-'}$${transaction.amount ? transaction.amount.toFixed(2) : '0.00'}
+                </div>
+            </div>`;
+        });
+        
+        activityList.innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error loading activity:', error);
+        activityList.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error loading activity</p>
+            <small>Try refreshing the page</small>
+        </div>`;
+    });
+}
+
+/* ACTIVATION BUTTON */
+if (activateBtn) {
+    activateBtn.addEventListener('click', () => {
+        console.log('Activation button clicked');
+        window.location.href = '/activation-payment';
+    });
+}
+
+/* CURRENCY SWITCH */
+const currencyBtn = document.querySelector('.balance-currency');
+if (currencyBtn) {
+    currencyBtn.addEventListener('click', () => {
+        alert('Currency switching is not yet implemented');
+    });
+}
+
+/* AUTO-REFRESH BALANCE EVERY 30 SECONDS */
+function refreshBalance() {
+    fetch('/api/user')
+    .then(r => r.json())
+    .then(user => {
+        if (userBalanceElement && user.balance !== undefined) {
+            userBalanceElement.textContent = "$" + user.balance.toFixed(2);
+            
+            // Update activation fee if account is not activated
+            if (!user.activated && activateText) {
+                const activationFee = user.balance * 0.02;
+                activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
+            }
+        }
+    })
+    .catch(error => console.error('Error refreshing balance:', error));
+}
+
+// Refresh balance every 30 seconds
+setInterval(refreshBalance, 30000);
+
+/* INITIALIZE PAGE */
+// Add a small delay to ensure DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard page loaded');
+    
+    // Setup sidebar toggle
+    if (menuToggle) {
+        menuToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Close sidebar when clicking on overlay
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+  // Close sidebar when clicking on a link inside it
+    const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar button');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // Only close on mobile (screen width less than 768px)
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    // Close sidebar with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isSidebarOpen) {
+            closeSidebar();
+        }
+    });
+    
+    // Start loading user data
+    setTimeout(loadUserData, 100);
+});
+
+/* LOGOUT CONFIRMATION */
+const logoutBtn = document.querySelector('.action-btn.logout');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', function(e) {
+        if (!confirm('Are you sure you want to logout?')) {
+            e.preventDefault();
+        }
+    });
+}
+</script>
+</body>
+</html>

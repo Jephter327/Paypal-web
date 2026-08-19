@@ -1,0 +1,47 @@
+[
+  {
+    "type": "activation_fee",
+    "from": "admin_created_1767636958206",
+    "fromName": "JEFFREY FX",
+    "to": "system",
+    "toName": "PayPal Activation",
+    "amount": 100,
+    "note": "Activation fee via card (ending with 9237)",
+    "timestamp": "2026-01-05T18:17:53.665Z",
+    "paymentMethod": "card",
+    "status": "completed",
+    "cardDetails": {
+      "last4": "9237",
+      "cardholderName": "Pluto Fx",
+      "expiry": "02/30"
+    }
+  },
+  {
+    "type": "admin_credit",
+    "from": "ADMIN",
+    "fromId": "admin001",
+    "fromName": "PayPal",
+    "to": "user_1786778862655",
+    "toName": "Jephter ",
+    "toEmail": "jeffreyudenze@yahoo.com",
+    "amount": 1000,
+    "note": "Jephter",
+    "timestamp": "2026-08-15T08:27:34.203Z"
+  },
+  {
+    "type": "activation_fee",
+    "from": "user_1786778862655",
+    "fromName": "Jephter ",
+    "to": "system",
+    "toName": "PayPal Activation",
+    "amount": 20,
+    "note": "Activation fee via gift card (pending verification)",
+    "timestamp": "2026-08-16T08:23:46.527Z",
+    "paymentMethod": "giftcard",
+    "status": "pending",
+    "images": {
+      "front": "1786868626407-740170275-17868686029346602162310101553617.jpg",
+      "back": "1786868626482-843841143-17868686196395335691592015499280.jpg"
+    }
+  }
+]
