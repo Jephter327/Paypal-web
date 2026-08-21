@@ -266,7 +266,7 @@ body{padding-bottom:90px}
         </div>
         <div class="nav-menu">
             <a class="nav-button active"><i class="fas fa-home"></i> Home</a>
-            <button class="nav-button disabled">
+            <button id="sendNavButton" class="nav-button disabled" type="button">
                 <i class="fas fa-paper-plane"></i> Send & Request
             </button>
             <a class="nav-button"><i class="fas fa-wallet"></i> Wallet</a>
@@ -292,7 +292,7 @@ body{padding-bottom:90px}
     </div>
     <div class="quick-actions">
         <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-        <button class="action-btn send disabled">
+        <button id="sendMoneyButton" class="action-btn send disabled" type="button">
             <i class="fas fa-paper-plane"></i> Send Money
         </button>
         <button class="action-btn request disabled">
@@ -377,7 +377,20 @@ const activationSection = document.getElementById('activationSection');
 const accountError = document.getElementById('accountError');
 const activateBtn = document.getElementById('activateAccount');
 const activateText = document.getElementById('activateText');
+const sendNavButton = document.getElementById('sendNavButton');
+const sendMoneyButton = document.getElementById('sendMoneyButton');
 const menuToggle = document.getElementById('menuToggle');
+
+function setSendButtonState(isActive) {
+    [sendNavButton, sendMoneyButton].forEach(button => {
+        if (!button) return;
+        button.classList.toggle('disabled', !isActive);
+        button.disabled = !isActive;
+        button.style.opacity = isActive ? '1' : '';
+        button.style.pointerEvents = isActive ? 'auto' : 'none';
+        button.onclick = isActive ? () => { window.location.href = '/send.html'; } : null;
+    });
+}
 const sidebar = document.querySelector('.sidebar');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 
@@ -464,35 +477,33 @@ function loadUserData() {
             userBalanceElement.textContent = "$" + (user.balance || 0).toFixed(2);
         }
         
-        // Check activation status
-        if (user.activated) {
-            // Account is activated
+        // Activation status is server-side: inactive -> pending -> active.
+        const activationStatus = user.status === 'active'
+            ? 'active'
+            : (user.status === 'pending' ? 'pending' : 'inactive');
+
+        if (activationStatus === 'active') {
             if (activationMessage) activationMessage.style.display = 'block';
             if (activationSection) activationSection.style.display = 'none';
             if (accountError) accountError.style.display = 'none';
-            
             if (statusIcon) statusIcon.style.color = '#28a745';
-            if (userStatusText) userStatusText.textContent = 'Activated';
-            
-            // Enable send/request buttons
-            document.querySelectorAll('.disabled').forEach(btn => {
-                btn.classList.remove('disabled');
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'auto';
-            });
+            if (userStatusText) userStatusText.textContent = 'Active';
+            setSendButtonState(true);
         } else {
-            // Account not activated
             if (activationMessage) activationMessage.style.display = 'none';
             if (activationSection) activationSection.style.display = 'block';
             if (accountError) accountError.style.display = 'block';
-            
-            if (statusIcon) statusIcon.style.color = '#f5a623';
-            if (userStatusText) userStatusText.textContent = 'Not Activated';
-            
-            // Show activation fee
-            const activationFee = (user.balance || 0) * 0.02;
-            if (activateText) {
-                activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
+            setSendButtonState(false);
+
+            if (activationStatus === 'pending') {
+                if (statusIcon) statusIcon.style.color = '#f39c12';
+                if (userStatusText) userStatusText.textContent = 'Pending Activation';
+                if (activateText) activateText.textContent = 'Activation Payment Pending Admin Review';
+            } else {
+                if (statusIcon) statusIcon.style.color = '#f5a623';
+                if (userStatusText) userStatusText.textContent = 'Inactive';
+                const activationFee = (user.balance || 0) * 0.02;
+                if (activateText) activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
             }
         }
         
@@ -613,10 +624,16 @@ function refreshBalance() {
         if (userBalanceElement && user.balance !== undefined) {
             userBalanceElement.textContent = "$" + user.balance.toFixed(2);
             
-            // Update activation fee if account is not activated
-            if (!user.activated && activateText) {
-                const activationFee = user.balance * 0.02;
-                activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
+            const isActive = user.status === 'active';
+            setSendButtonState(isActive);
+
+            if (!isActive && activateText) {
+              if (user.status === 'pending') {
+                    activateText.textContent = 'Activation Payment Pending Admin Review';
+                } else {
+                    const activationFee = user.balance * 0.02;
+                    activateText.textContent = `Activate Account (Pay $${activationFee.toFixed(2)} - 2% of Balance)`;
+                }
             }
         }
     })

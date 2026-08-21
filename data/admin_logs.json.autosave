@@ -595,5 +595,241 @@
     "details": {},
     "timestamp": "2026-08-19T09:08:26.628Z",
     "ip": "127.0.0.1"
+  },
+  {
+    "action": "login",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "email": "brightpaypal@gmail.com"
+    },
+    "timestamp": "2026-08-21T13:57:48.094Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "logout",
+    "adminId": "admin_created_1786869136789",
+    "details": {},
+    "timestamp": "2026-08-21T13:57:54.475Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "login",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "email": "brightpaypal@gmail.com"
+    },
+    "timestamp": "2026-08-21T13:59:03.370Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "logout",
+    "adminId": "admin_created_1786869136789",
+    "details": {},
+    "timestamp": "2026-08-21T14:05:52.861Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "login",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "email": "brightpaypal@gmail.com"
+    },
+    "timestamp": "2026-08-21T14:05:55.413Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "logout",
+    "adminId": "admin_created_1786869136789",
+    "details": {},
+    "timestamp": "2026-08-21T14:22:14.566Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "login",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "email": "brightpaypal@gmail.com"
+    },
+    "timestamp": "2026-08-21T14:22:16.864Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "inactive",
+      "newValue": "active"
+    },
+    "timestamp": "2026-08-21T14:22:34.873Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "active",
+      "newValue": "inactive"
+    },
+    "timestamp": "2026-08-21T14:22:47.034Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "inactive",
+      "newValue": "active"
+    },
+    "timestamp": "2026-08-21T14:23:08.607Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "active",
+      "newValue": "pending"
+    },
+    "timestamp": "2026-08-21T14:25:56.790Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "pending",
+      "newValue": "inactive"
+    },
+    "timestamp": "2026-08-21T14:26:24.340Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "inactive",
+      "newValue": "pending"
+    },
+    "timestamp": "2026-08-21T14:28:22.721Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "pending",
+      "newValue": "active"
+    },
+    "timestamp": "2026-08-21T14:28:46.901Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "add_balance",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "amount": 50000,
+      "oldBalance": 0,
+      "newBalance": 50000,
+      "note": "From PayPal "
+    },
+    "timestamp": "2026-08-21T14:29:53.581Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "update_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "targetUser": "user_1787320709607",
+      "targetUserName": "Jephter ",
+      "targetUserEmail": "me@gmail.com",
+      "field": "status",
+      "oldValue": "active",
+      "newValue": "inactive"
+    },
+    "timestamp": "2026-08-21T14:31:33.969Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "activation_payment",
+    "adminId": "system",
+    "details": {
+      "userId": "user_1787320709607",
+      "userName": "Jephter ",
+      "userEmail": "me@gmail.com",
+      "amount": 1000,
+      "method": "usdt",
+      "status": "pending",
+      "transactionId": "Hii"
+    },
+    "timestamp": "2026-08-21T14:31:49.736Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "approve_usdt_activation",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "userId": "user_1787320709607",
+      "userName": "Jephter ",
+      "amount": 1000,
+      "transactionId": "Hii",
+      "submissionId": "2026-08-21T14:31:49.724Z"
+    },
+    "timestamp": "2026-08-21T14:33:15.707Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "reject_giftcard",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "userId": "user_1786778862655",
+      "userName": "Jephter ",
+      "reason": "Invalid gift card",
+      "submissionId": "2026-08-16T08:23:46.521Z"
+    },
+    "timestamp": "2026-08-21T15:49:53.277Z",
+    "ip": "127.0.0.1"
+  },
+  {
+    "action": "delete_user",
+    "adminId": "admin_created_1786869136789",
+    "details": {
+      "deletedUser": "user_1787320709607",
+      "userName": "Jephter ",
+      "userEmail": "me@gmail.com",
+      "balance": 50000
+    },
+    "timestamp": "2026-08-21T15:50:17.800Z",
+    "ip": "127.0.0.1"
   }
 ]

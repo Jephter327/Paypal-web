@@ -203,32 +203,13 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             submitBtn.disabled = true;
 
-            // Send to server
-            fetch('/activation-payment/usdt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    transactionId: transactionId
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('Payment submitted successfully! Your account is now pending admin review.');
-                    window.location.href = '/dashboard';
-                } else {
-                    alert('Error: ' + result.error);
-                    submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
-                    submitBtn.disabled = false;
-                }
-            })
-            .catch(error => {
-                alert('An error occurred. Please try again.');
-                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
-                submitBtn.disabled = false;
-            });
+            // Demo success state — no activation-payment request.
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Success';
+                submitBtn.disabled = true;
+                alert('Payment submitted successfully!');
+            }, 500);
+        });
         });
     </script>
 </body>

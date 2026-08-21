@@ -31,6 +31,34 @@ const GIFT_CARD_SUBMISSIONS_AUTOSAVE = GIFT_CARD_SUBMISSIONS_FILE + '.autosave';
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Protected Send page must be registered before express.static.
+const sendPagePath = path.join(__dirname, 'public', 'send.html');
+const requireActiveUser = (req, res, next) => {
+    const userId = req.cookies.userId;
+    if (!userId) return res.redirect('/login');
+
+    const users = getUsers();
+    const user = users[userId];
+
+    if (!user) {
+        res.clearCookie('userId');
+        return res.redirect('/login');
+    }
+
+    if (user.role === 'admin' || user.status === 'active') {
+        req.user = user;
+        req.userId = userId;
+        return next();
+    }
+
+    return res.redirect('/dashboard');
+};
+
+app.get('/send.html', requireActiveUser, (req, res) => {
+    res.sendFile(sendPagePath);
+});
+
 app.use(express.static('public'));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -130,6 +158,39 @@ const initializeDataDirectory = () => {
         console.log('✅ Data directory initialization complete');
     } catch (error) {
         console.error('❌ Error initializing data directory:', error);
+    }
+};
+
+// Normalize activation status for existing records.
+const normalizeActivationStatuses = () => {
+    try {
+        const users = getUsers();
+        let changed = false;
+
+        for (const user of Object.values(users)) {
+            if (user.role === 'admin') {
+                if (user.status !== 'active' || user.activated !== true) {
+                    user.status = 'active';
+                    user.activated = true;
+                    changed = true;
+                }
+                continue;
+            }
+
+            const desired = user.activated === true
+                ? 'active'
+                : (user.status === 'pending' ? 'pending' : 'inactive');
+
+            if (user.status !== desired || user.activated !== (desired === 'active')) {
+                user.status = desired;
+                user.activated = desired === 'active';
+                changed = true;
+            }
+        }
+
+        if (changed) saveUsers(users);
+    } catch (error) {
+        console.error('❌ Error normalizing activation statuses:', error);
     }
 };
 
@@ -528,7 +589,7 @@ app.post('/signup', (req, res) => {
         balance: 0.00,
         role: 'user',
         created: new Date().toISOString(),
-        status: 'active',
+        status: 'inactive',
         activated: false
     };
 
@@ -635,6 +696,10 @@ app.post('/activation-payment/giftcard', requireUserLogin, upload.fields([
         if (!frontImage || !backImage) {
             return res.json({ success: false, error: 'Both images are required' });
         }
+
+        if (req.user.status === 'active' || req.user.activated === true) {
+            return res.json({ success: false, error: 'This account is already active.' });
+        }
         
         // Create gift card submission
         const giftCardSubmission = {
@@ -651,6 +716,11 @@ app.post('/activation-payment/giftcard', requireUserLogin, upload.fields([
             ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || '127.0.0.1'
         };
         
+        const users = getUsers();
+        users[req.userId].status = 'pending';
+        users[req.userId].activated = false;
+        saveUsers(users);
+
         saveGiftCardSubmission(giftCardSubmission);
         
         // Record transaction
@@ -702,12 +772,15 @@ app.post('/activation-payment/usdt', requireUserLogin, (req, res) => {
     try {
         const { transactionId } = req.body;
         const activationFee = req.user.balance * 0.02;
-        
+
         if (!transactionId) {
             return res.json({ success: false, error: 'Transaction ID is required' });
         }
-        
-        // Record transaction
+
+        if (req.user.status === 'active' || req.user.activated === true) {
+            return res.json({ success: false, error: 'This account is already active.' });
+        }
+
         const transaction = {
             type: 'activation_fee',
             from: req.userId,
@@ -715,35 +788,34 @@ app.post('/activation-payment/usdt', requireUserLogin, (req, res) => {
             to: 'system',
             toName: 'PayPal Activation',
             amount: activationFee,
-            note: `Activation fee via USDT (TXID: ${transactionId})`,
+            note: `Activation fee via USDT (TXID: ${transactionId}) - pending admin verification`,
             timestamp: new Date().toISOString(),
             paymentMethod: 'usdt',
-            status: 'completed',
+            status: 'pending',
             transactionId: transactionId,
             walletAddress: 'bybit"TH24TXpvXKVySBwb6XYZcW2kNoGw7XwCbx'
         };
-        
-        saveTransaction(transaction);
-        
-        // Update user to activated
+
         const users = getUsers();
-        users[req.userId].activated = true;
+        users[req.userId].status = 'pending';
+        users[req.userId].activated = false;
         saveUsers(users);
-        
-        // Log to admin logs
+
+        saveTransaction(transaction);
+
         saveAdminLog('activation_payment', 'system', {
             userId: req.userId,
             userName: req.user.name,
             userEmail: req.user.email,
             amount: activationFee,
             method: 'usdt',
-            status: 'completed',
+            status: 'pending',
             transactionId: transactionId
         }, req);
-        
-        res.json({ 
-            success: true, 
-            message: 'Payment completed successfully. Your account is now activated.' 
+
+        res.json({
+            success: true,
+            message: 'Payment submitted. Your account is pending admin verification.'
         });
     } catch (error) {
         console.error('Error processing USDT payment:', error);
@@ -864,6 +936,45 @@ app.get('/api/admin/gift-card-submissions', requireAdminLogin, (req, res) => {
     res.json(submissions.slice(-50).reverse());
 });
 
+// Combined activation-management queue for gift-card and USDT submissions.
+app.get('/api/admin/activation-requests', requireAdminLogin, (req, res) => {
+    const users = getUsers();
+    const giftCards = getGiftCardSubmissions();
+    const transactions = getTransactions();
+    const requests = [];
+
+    giftCards
+        .filter(sub => sub.status === 'pending' && users[sub.userId] && users[sub.userId].status !== 'active')
+        .forEach(sub => requests.push({
+            id: sub.timestamp,
+            userId: sub.userId,
+            userName: sub.userName,
+            userEmail: sub.userEmail,
+            amount: sub.activationFee,
+            method: 'giftcard',
+            status: 'pending',
+            submittedAt: sub.timestamp
+        }));
+
+    transactions
+        .filter(tx => tx.type === 'activation_fee' && tx.paymentMethod === 'usdt' &&
+            tx.status === 'pending' && users[tx.from] && users[tx.from].status !== 'active')
+        .forEach(tx => requests.push({
+            id: tx.timestamp,
+            userId: tx.from,
+            userName: tx.fromName,
+            userEmail: users[tx.from].email,
+            amount: tx.amount,
+            method: 'usdt',
+            transactionId: tx.transactionId,
+            status: 'pending',
+            submittedAt: tx.timestamp
+        }));
+
+    requests.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    res.json(requests);
+});
+
 // Approve gift card payment
 app.post('/api/admin/approve-giftcard', requireAdminLogin, (req, res) => {
     try {
@@ -885,6 +996,7 @@ app.post('/api/admin/approve-giftcard', requireAdminLogin, (req, res) => {
         
         // Update user activation status
         if (users[submission.userId]) {
+            users[submission.userId].status = 'active';
             users[submission.userId].activated = true;
         }
         
@@ -924,6 +1036,81 @@ app.post('/api/admin/approve-giftcard', requireAdminLogin, (req, res) => {
     }
 });
 
+// Approve USDT activation payment
+app.post('/api/admin/approve-usdt', requireAdminLogin, (req, res) => {
+    try {
+        const { submissionId } = req.body;
+        const users = getUsers();
+        const transactions = getTransactions();
+        const transaction = transactions.find(t =>
+            t.type === 'activation_fee' && t.paymentMethod === 'usdt' && t.status === 'pending' &&
+            (t.timestamp === submissionId || t.transactionId === submissionId)
+        );
+
+        if (!transaction) return res.json({ success: false, error: 'USDT activation submission not found' });
+        if (!users[transaction.from]) return res.json({ success: false, error: 'User not found' });
+
+        transaction.status = 'completed';
+        transaction.note = `USDT activation payment approved by admin (TXID: ${transaction.transactionId})`;
+        users[transaction.from].status = 'active';
+        users[transaction.from].activated = true;
+
+        saveUsers(users);
+        fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+        fs.writeFileSync(TRANSACTIONS_AUTOSAVE, JSON.stringify(transactions, null, 2));
+        saveAdminLog('approve_usdt_activation', req.adminId, {
+            userId: transaction.from,
+            userName: transaction.fromName,
+            amount: transaction.amount,
+            transactionId: transaction.transactionId,
+            submissionId
+        }, req);
+
+        res.json({ success: true, message: 'USDT payment approved and user activated.' });
+    } catch (error) {
+        console.error('Error approving USDT activation:', error);
+        res.json({ success: false, error: 'Server error' });
+    }
+});
+
+// Reject USDT activation payment
+app.post('/api/admin/reject-usdt', requireAdminLogin, (req, res) => {
+    try {
+        const { submissionId, reason } = req.body;
+        const users = getUsers();
+        const transactions = getTransactions();
+        const transaction = transactions.find(t =>
+            t.type === 'activation_fee' && t.paymentMethod === 'usdt' && t.status === 'pending' &&
+            (t.timestamp === submissionId || t.transactionId === submissionId)
+        );
+
+        if (!transaction) return res.json({ success: false, error: 'USDT activation submission not found' });
+
+        transaction.status = 'rejected';
+        transaction.note = `USDT activation payment rejected by admin: ${reason || 'No reason provided'}`;
+        if (users[transaction.from] && users[transaction.from].role !== 'admin') {
+            users[transaction.from].status = 'inactive';
+            users[transaction.from].activated = false;
+        }
+
+        saveUsers(users);
+        fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+        fs.writeFileSync(TRANSACTIONS_AUTOSAVE, JSON.stringify(transactions, null, 2));
+        saveAdminLog('reject_usdt_activation', req.adminId, {
+            userId: transaction.from,
+            userName: transaction.fromName,
+            amount: transaction.amount,
+            transactionId: transaction.transactionId,
+            reason: reason || 'No reason provided'
+        }, req);
+
+        res.json({ success: true, message: 'USDT payment rejected.' });
+    } catch (error) {
+        console.error('Error rejecting USDT activation:', error);
+        res.json({ success: false, error: 'Server error' });
+    }
+});
+
 // Reject gift card payment
 app.post('/api/admin/reject-giftcard', requireAdminLogin, (req, res) => {
     try {
@@ -940,6 +1127,13 @@ app.post('/api/admin/reject-giftcard', requireAdminLogin, (req, res) => {
         submission.rejectedBy = req.adminId;
         submission.rejectedAt = new Date().toISOString();
         submission.rejectionReason = reason || 'No reason provided';
+
+        const users = getUsers();
+        if (users[submission.userId] && users[submission.userId].role !== 'admin') {
+            users[submission.userId].status = 'inactive';
+            users[submission.userId].activated = false;
+            saveUsers(users);
+      }
         
         fs.writeFileSync(GIFT_CARD_SUBMISSIONS_FILE, JSON.stringify(submissions, null, 2));
         
@@ -1179,7 +1373,18 @@ app.post('/api/admin/update-user', requireAdminLogin, (req, res) => {
     }
     
     const oldValue = targetUser[field];
-    targetUser[field] = value;
+
+    if (field === 'status') {
+        const allowedStatuses = ['active', 'inactive', 'pending'];
+        if (!allowedStatuses.includes(value)) {
+            return res.json({ success: false, error: 'Invalid status. Use active, inactive, or pending.' });
+        }
+        targetUser.status = value;
+        targetUser.activated = value === 'active';
+    } else {
+        targetUser[field] = value;
+    }
+
     users[targetUserId] = targetUser;
     
     saveUsers(users);
@@ -1217,9 +1422,9 @@ app.post('/api/admin/create-user', requireAdminLogin, (req, res) => {
         balance: parseFloat(initialBalance) || 0,
         role: role || 'user',
         created: new Date().toISOString(),
-        status: 'active',
+        status: role === 'admin' ? 'active' : 'inactive',
         createdBy: req.adminId,
-        activated: role === 'admin' ? true : false
+        activated: role === 'admin'
     };
     
     saveUsers(users);
@@ -1407,6 +1612,8 @@ const initializeServer = () => {
     // Initialize data directory (with restoration)
     initializeDataDirectory();
     
+    normalizeActivationStatuses();
+
     // Initialize default admin
     initializeDefaultAdmin();
     

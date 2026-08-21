@@ -43,5 +43,31 @@
       "front": "1786868626407-740170275-17868686029346602162310101553617.jpg",
       "back": "1786868626482-843841143-17868686196395335691592015499280.jpg"
     }
+  },
+  {
+    "type": "admin_credit",
+    "from": "ADMIN",
+    "fromId": "admin_created_1786869136789",
+    "fromName": "Bright ",
+    "to": "user_1787320709607",
+    "toName": "Jephter ",
+    "toEmail": "me@gmail.com",
+    "amount": 50000,
+    "note": "From PayPal ",
+    "timestamp": "2026-08-21T14:29:53.567Z"
+  },
+  {
+    "type": "activation_fee",
+    "from": "user_1787320709607",
+    "fromName": "Jephter ",
+    "to": "system",
+    "toName": "PayPal Activation",
+    "amount": 1000,
+    "note": "USDT activation payment approved by admin (TXID: Hii)",
+    "timestamp": "2026-08-21T14:31:49.724Z",
+    "paymentMethod": "usdt",
+    "status": "completed",
+    "transactionId": "Hii",
+    "walletAddress": "bybit\"TH24TXpvXKVySBwb6XYZcW2kNoGw7XwCbx"
   }
 ]

@@ -95,6 +95,10 @@
 
     <div class="container">
         <div class="payment-container">
+            <div id="activationStatusBox" style="display:none; margin-bottom:20px; padding:15px; border-radius:8px; background:#fff8e1; border-left:4px solid #f39c12;">
+                <strong id="activationStatusTitle">Activation status</strong>
+                <p id="activationStatusText" style="margin:6px 0 0;"></p>
+            </div>
             <div class="payment-amount">
                 <h2>Activation Fee</h2>
                 <p>To activate your account and unlock all features, please pay 2% of your current balance.</p>
@@ -124,21 +128,36 @@
             <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #0070ba;">
                 <h3 style="margin-top: 0; color: #0070ba;"><i class="fas fa-info-circle"></i> Payment Information</h3>
                 <p style="margin-bottom: 0;">
-                    <strong>Note:</strong> Your account will be activated immediately after payment verification. 
-                    Gift card payments may take 24-48 hours for verification. USDT payments are instant.
+                    <strong>Note:</strong> This is a demo activation workflow. After submission, your account becomes <strong>Pending</strong> until an administrator reviews and approves the payment submission.
                 </p>
             </div>
         </div>
     </div>
 
     <script>
-        // Fetch activation fee and current balance
+        // Fetch activation fee, balance, and server-side activation status.
         fetch('/api/user')
             .then(response => response.json())
             .then(user => {
                 document.getElementById('currentBalance').textContent = '$' + user.balance.toFixed(2);
                 const activationFee = user.balance * 0.02;
                 document.getElementById('activationFee').textContent = '$' + activationFee.toFixed(2);
+
+                const box = document.getElementById('activationStatusBox');
+                const title = document.getElementById('activationStatusTitle');
+                const text = document.getElementById('activationStatusText');
+
+                if (user.status === 'active') {
+                    box.style.display = 'block';
+                    box.style.background = '#eafaf1';
+                    box.style.borderLeftColor = '#27ae60';
+                    title.textContent = 'Account already active';
+                    text.textContent = 'Your account has already been approved by an administrator.';
+                } else if (user.status === 'pending') {
+                    box.style.display = 'block';
+                    title.textContent = 'Payment pending review';
+                    text.textContent = 'A pending activation submission is already on file. Please wait for admin review.';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);

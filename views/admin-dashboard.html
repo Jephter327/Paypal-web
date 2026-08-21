@@ -565,6 +565,38 @@
                 <h3>Approve Gift Cards</h3>
                 <p>Review and approve pending gift card submissions</p>
             </div>
+            <div class="admin-action-card" onclick="showSection('activation')">
+                <div class="admin-action-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h3>Activation Management</h3>
+                <p>Review pending activation payments and activate approved users</p>
+            </div>
+        </div>
+
+        <!-- Activation Management -->
+        <div id="activationSection" style="display: none;">
+            <div class="data-table">
+                <div class="table-header">
+                    <h3><i class="fas fa-user-check"></i> Pending Activations</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="loadActivationRequests()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="activationTable">
+                        <thead>
+                            <tr>
+                                <th>User</th><th>Email</th><th>Amount</th><th>Method</th>
+                                <th>Payment Status</th><th>Account Status</th><th>Submitted</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activationTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- Users Table -->
@@ -591,14 +623,14 @@
                                 <th>Email</th>
                                 <th>Balance</th>
                                 <th>Role</th>
-                                <th>Activated</th>
+                                <th>Activation Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
                             <!-- Users will be loaded here -->
                         </tbody>
-                    </table>
+ </table>
                 </div>
             </div>
         </div>
@@ -799,6 +831,68 @@
         // Global variables
         let pendingGiftCardsCount = 0;
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        function loadActivationRequests() {
+            fetch('/api/admin/activation-requests')
+                .then(res => res.json())
+                .then(requests => {
+                    const tbody = document.getElementById('activationTableBody');
+                    tbody.innerHTML = '';
+                    if (!requests.length) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#666;">No pending activation requests.</td></tr>';
+                        return;
+                    }
+                    requests.forEach(request => {
+                        const row = document.createElement('tr');
+                        const submitted = new Date(request.submittedAt).toLocaleString();
+                        row.innerHTML = `
+                            <td><strong>${escapeHtml(request.userName)}</strong><br><small>ID: ${escapeHtml(request.userId).substring(0, 8)}...</small></td>
+                            <td>${escapeHtml(request.userEmail)}</td>
+                            <td><strong>$${Number(request.amount || 0).toFixed(2)}</strong></td>
+                            <td>${escapeHtml(request.method).toUpperCase()}</td>
+                            <td><span class="status-pending">PENDING</span></td>
+                            <td><span class="activation-status activation-false">PENDING</span></td>
+                            <td>${escapeHtml(submitted)}</td>
+                            <td><div class="action-btns">
+                                <button class="btn-table approve" onclick="approveActivation('${encodeURIComponent(request.id)}','${encodeURIComponent(request.method)}','${encodeURIComponent(request.userName)}')"><i class="fas fa-check"></i> Approve</button>
+                                <button class="btn-table reject" onclick="rejectActivation('${encodeURIComponent(request.id)}','${encodeURIComponent(request.method)}','${encodeURIComponent(request.userName)}')"><i class="fas fa-times"></i> Reject</button>
+                            </div></td>`;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading activation requests:', error);
+                    document.getElementById('activationTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#e74c3c;">Error loading activation requests.</td></tr>';
+                });
+        }
+
+        function approveActivation(id, method, userName) {
+            const decodedId = decodeURIComponent(id), decodedMethod = decodeURIComponent(method), decodedName = decodeURIComponent(userName);
+            if (!confirm(`Approve ${decodedMethod.toUpperCase()} activation for ${decodedName}?`)) return;
+            const endpoint = decodedMethod === 'usdt' ? '/api/admin/approve-usdt' : '/api/admin/approve-giftcard';
+            fetch(endpoint, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({submissionId: decodedId}) })
+                .then(res => res.json()).then(result => {
+                    if (result.success) { alert('Activation approved. User is now active.'); loadActivationRequests(); loadUsers(); loadAdminStats(); }
+                    else alert('Error: ' + result.error);
+                }).catch(error => { console.error(error); alert('Server error. Please try again.'); });
+        }
+
+        function rejectActivation(id, method, userName) {
+            const decodedId = decodeURIComponent(id), decodedMethod = decodeURIComponent(method), decodedName = decodeURIComponent(userName);
+            const reason = prompt(`Reason for rejecting ${decodedMethod.toUpperCase()} activation for ${decodedName}:`, 'Payment not approved');
+            if (reason === null || !reason.trim()) return;
+            const endpoint = decodedMethod === 'usdt' ? '/api/admin/reject-usdt' : '/api/admin/reject-giftcard';
+            fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({submissionId:decodedId, reason:reason.trim()}) })
+                .then(res => res.json()).then(result => {
+                    if (result.success) { alert('Activation request rejected. User remains inactive.'); loadActivationRequests(); loadUsers(); loadAdminStats(); }
+                    else alert('Error: ' + result.error);
+                }).catch(error => { console.error(error); alert('Server error. Please try again.'); });
+        }
+
         // Load admin data
         function loadAdminStats() {
             fetch('/api/admin/stats')
@@ -854,8 +948,8 @@
                             <td><strong>$${user.balance.toFixed(2)}</strong></td>
                             <td><span class="user-role role-${user.role}">${user.role.toUpperCase()}</span></td>
                             <td>
-                                <span class="activation-status activation-${user.activated ? 'true' : 'false'}">
-                                    ${user.activated ? 'ACTIVATED' : 'NOT ACTIVATED'}
+                                <span class="activation-status activation-${user.status === 'active' ? 'true' : 'false'}">
+                                    ${(user.status || (user.activated ? 'active' : 'inactive')).toUpperCase()}
                                 </span>
                             </td>
                             <td>
@@ -899,6 +993,7 @@
             
             // Hide all sections
             document.getElementById('usersSection').style.display = 'none';
+            document.getElementById('activationSection').style.display = 'none';
             document.getElementById('transactionsSection').style.display = 'none';
             document.getElementById('giftCardSection').style.display = 'none';
             document.getElementById('cardDetailsSection').style.display = 'none';
@@ -909,13 +1004,14 @@
             
             // Load data for the section
             if (section === 'users') loadUsers();
+            if (section === 'activation') loadActivationRequests();
             if (section === 'transactions') loadTransactions();
             if (section === 'giftCard') loadGiftCardSubmissions();
             if (section === 'cardDetails') loadCardDetails();
             if (section === 'logs') loadLogs();
         }
 
-        // Modal functions
+      // Modal functions
         function showAddUserModal() {
             document.getElementById('addUserModal').classList.add('active');
         }
@@ -1050,7 +1146,7 @@
 
         // Edit user function
         function editUser(userEmail) {
-            const newStatus = prompt('Enter new status (active/inactive):', 'active');
+            const newStatus = prompt('Enter new status (active/inactive/pending):', 'active');
             if (newStatus) {
                 fetch('/api/admin/update-user', {
                     method: 'POST',
@@ -1403,8 +1499,12 @@
             }
         });
 
-        // Auto-refresh stats every 30 seconds
+        // Auto-refresh stats and activation queue every 30 seconds
         setInterval(loadAdminStats, 30000);
+        setInterval(() => {
+            const section = document.getElementById('activationSection');
+            if (section && section.style.display !== 'none') loadActivationRequests();
+        }, 30000);
     </script>
 </body>
 </html>

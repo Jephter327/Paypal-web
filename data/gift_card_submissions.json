@@ -8,8 +8,11 @@
       "front": "1786868626407-740170275-17868686029346602162310101553617.jpg",
       "back": "1786868626482-843841143-17868686196395335691592015499280.jpg"
     },
-    "status": "pending",
+    "status": "rejected",
     "timestamp": "2026-08-16T08:23:46.521Z",
-    "ip": "127.0.0.1"
+    "ip": "127.0.0.1",
+    "rejectedBy": "admin_created_1786869136789",
+    "rejectedAt": "2026-08-21T15:49:53.271Z",
+    "rejectionReason": "Invalid gift card"
   }
 ]

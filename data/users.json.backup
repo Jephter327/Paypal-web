@@ -1,5 +1,4 @@
 {
-  
   "admin_created_1786869136789": {
     "id": "admin_created_1786869136789",
     "name": "Bright ",
@@ -10,6 +9,41 @@
     "created": "2026-08-16T08:32:16.789Z",
     "status": "active",
     "createdBy": "admin002",
+    "activated": true
+  },
+  "admin001": {
+    "id": "admin001",
+    "name": "PayPal",
+    "email": "paypal@gmail.com",
+    "password": "itoogood",
+    "balance": 1000000,
+    "role": "admin",
+    "created": "2026-08-19T09:07:33.568Z",
+    "status": "active",
+    "adminLevel": "super",
+    "activated": true
+  },
+  "admin002": {
+    "id": "admin002",
+    "name": "PayPal",
+    "email": "adminpaypal@gmail.com",
+    "password": "paypal666",
+    "balance": 10000000000000,
+    "role": "admin",
+    "created": "2026-08-19T09:07:33.576Z",
+    "status": "active",
+    "adminLevel": "super",
+    "activated": true
+  },
+  "user_1787320709607": {
+    "id": "user_1787320709607",
+    "name": "Jephter ",
+    "email": "me@gmail.com",
+    "password": "Paypal",
+    "balance": 50000,
+    "role": "user",
+    "created": "2026-08-21T13:58:29.607Z",
+    "status": "active",
     "activated": true
   }
 }
