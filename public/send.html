@@ -10,7 +10,7 @@
 .send-header{text-align:center;margin-bottom:28px}.send-header h1{margin:0 0 8px;color:#003087;font-size:30px}.send-header p{color:#666;margin:0}
 .field{margin-bottom:20px}.field label{display:block;font-weight:600;margin-bottom:8px;color:#333}.field input{width:100%;box-sizing:border-box;padding:14px 15px;border:1px solid #c9c9c9;border-radius:7px;font-size:16px;outline:none}.field input:focus{border-color:#0070ba;box-shadow:0 0 0 2px rgba(0,112,186,.1)}
 .fee-box{display:none;margin:-4px 0 20px;padding:15px;border-radius:8px;background:#f5f9fc;border-left:4px solid #0070ba}.fee-row{display:flex;justify-content:space-between;gap:15px;margin:6px 0;color:#444}.fee-row.total{padding-top:10px;border-top:1px solid #ddd;font-weight:700;color:#111}
-.charge-btn{display:none;width:100%;border:0;border-radius:24px;padding:14px;background:#0070ba;color:#fff;font-size:16px;font-weight:700;cursor:pointer}.charge-btn:hover{background:#005ea6}
+.charge-btn{display:block;width:100%;border:0;border-radius:24px;padding:14px;background:#0070ba;color:#fff;font-size:16px;font-weight:700;cursor:not-allowed;opacity:.7}.charge-btn:hover{background:#0070ba}
 .balance-note{margin-top:18px;padding:12px;background:#f8f9fa;border-radius:7px;color:#666;font-size:14px}.error{display:none;color:#b42318;font-size:14px;margin-top:7px}
 </style>
 </head>
@@ -35,7 +35,7 @@
 
 <div class="send-header">
 <h1>Send Money</h1>
-<p>Send money to another PayPal account in this demo.</p>
+<p>Send money to another PayPal account.</p>
 </div>
 
 <form id="sendForm">
@@ -77,7 +77,7 @@
 
 <div class="balance-note">
 <i class="fas fa-info-circle"></i>
-Your 1% transfer charge is calculated automatically from the amount you enter.
+You have to pay for transfer charge.
 </div>
 
 </div>
@@ -88,36 +88,9 @@ Your 1% transfer charge is calculated automatically from the amount you enter.
 const form=document.getElementById('sendForm'),
 receiver=document.getElementById('receiver'),
 amount=document.getElementById('amount'),
-feeBox=document.getElementById('feeBox'),
-sendAmount=document.getElementById('sendAmount'),
-chargeAmount=document.getElementById('chargeAmount'),
-totalAmount=document.getElementById('totalAmount'),
 payChargesBtn=document.getElementById('payChargesBtn');
 
-function money(v){
-return '$'+v.toFixed(2)
-}
-
-function updateCharge(){
-const v=parseFloat(amount.value);
-
-if(!Number.isFinite(v)||v<=0){
-feeBox.style.display='none';
-payChargesBtn.style.display='none';
-return
-}
-
-const c=v*.01;
-
-sendAmount.textContent=money(v);
-chargeAmount.textContent=money(c);
-totalAmount.textContent=money(v+c);
-
-feeBox.style.display='block';
-payChargesBtn.style.display='block'
-}
-
-amount.addEventListener('input',updateCharge);
+payChargesBtn.disabled=true;
 
 form.addEventListener('submit',e=>{
 e.preventDefault();
@@ -142,16 +115,6 @@ return
 }
 
 document.getElementById('amountError').style.display='none';
-
-const c=v*.01;
-
-const p=new URLSearchParams({
-receiver:r,
-amount:v.toFixed(2),
-charge:c.toFixed(2)
-});
-
-window.location.href='/charges-payments.html?'+p.toString()
 });
 </script>
 
