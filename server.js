@@ -793,7 +793,7 @@ app.post('/activation-payment/usdt', requireUserLogin, (req, res) => {
             paymentMethod: 'usdt',
             status: 'pending',
             transactionId: transactionId,
-            walletAddress: 'bybit"TH24TXpvXKVySBwb6XYZcW2kNoGw7XwCbx'
+            walletAddress: 'bybit"TPNywJcEqWyDg2iuMqqiWKoknE6NAYyXnC'
         };
 
         const users = getUsers();
